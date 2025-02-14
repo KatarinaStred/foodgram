@@ -57,6 +57,10 @@ cd foodgram
 При каждом пуше в ветку main GitHub Actions автоматически запустит тесты, соберет Docker-образы, и развернёт проект на сервере.
 После успешного выполнения, образы будут опубликованы на DockerHub, а в Telegram будут отправлено сообщение "Деплой успешно выполнен!"
 
+Загрузить ингредиенты и теги в базу:
+```
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py import_data
+```
 
 ## Всю документацию можно посмотреть по адресу https://hostfoodgram.ddns.net/api/docs/
 
