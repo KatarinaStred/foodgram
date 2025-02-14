@@ -22,10 +22,12 @@ class Command(BaseCommand):
         ) as file_csv:
             data = csv.reader(file_csv)
             for row in data:
+                name_csv = 0
+                unit_csv = 1
                 try:
                     obj, created = Ingredient.objects.get_or_create(
-                        name=row['name'],
-                        measurement_unit=row['measurement_unit'],)
+                        name=row[name_csv],
+                        measurement_unit=row[unit_csv],)
                     if not created:
                         print(f'Ингредиент {obj} уже есть в базе.')
                 except IntegrityError as err:
@@ -37,10 +39,12 @@ class Command(BaseCommand):
         ) as file_csv:
             data = csv.reader(file_csv)
             for row in data:
+                name_csv = 0
+                slug_csv = 1
                 try:
                     obj, created = Tag.objects.get_or_create(
-                        name=row['name'],
-                        slug=row['slug'])
+                        name=row[name_csv],
+                        slug=row[slug_csv])
                     if not created:
                         print(f'Тег {obj} уже есть в базе.')
                 except IntegrityError as err:
