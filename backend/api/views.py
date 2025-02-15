@@ -29,16 +29,14 @@ from api.serializers import (
     SubscriptionSerializer,
     SubscriptionUserSerializer,
     TagSerializer,
-    UserSerializer
-)
+    UserSerializer)
 from recipes.models import (
     Ingredient,
     IngredientInRecipe,
     Favorite,
     Recipe,
     ShoppingCart,
-    Tag
-)
+    Tag)
 
 from users.models import Subscription, User
 
