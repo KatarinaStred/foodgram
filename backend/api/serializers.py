@@ -3,6 +3,7 @@ import base64
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (
     Ingredient,
@@ -91,17 +92,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=('user', 'author'),
+                message='Вы уже подписаны на этого автора.')]
 
     def validate(self, value):
-        author = self.context['author']
-        user = self.context['request'].user
-        if (author == user
-            or Subscription.objects.filter(
-                author=author,
-                user=user).exists()):
-            raise serializers.ValidationError(
-                'Нельзя подписаться на пользователя!')
-        elif (value == self.context['request'].user):
+        user = value['user']
+        if (value == user):
             raise serializers.ValidationError(
                 'Нельзя подписываться на самого себя!')
         return value
@@ -222,13 +221,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
-        return request.user.is_authenticated and Favorite.objects.filter(
+        return request.user.is_authenticated and obj.favorites.filter(
             user=request.user,
             recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
-        return request.user.is_authenticated and ShoppingCart.objects.filter(
+        return request.user.is_authenticated and obj.shopping_cart.filter(
             user=request.user,
             recipe=obj).exists()
 
@@ -245,7 +244,17 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'author',
             'is_favorited',
             'is_in_shopping_cart')
-        read_only_fields = ('author',)
+        read_only_fields = (
+            'id',
+            'ingredients',
+            'tags',
+            'image',
+            'name',
+            'text',
+            'cooking_time',
+            'author',
+            'is_favorited',
+            'is_in_shopping_cart')
 
 
 class RecipeEditSerializer(serializers.ModelSerializer):
@@ -272,12 +281,19 @@ class RecipeEditSerializer(serializers.ModelSerializer):
             'cooking_time')
         read_only_fields = ('author',)
 
+    def validate(self, value):
+        recipe = value['recipe']
+        if (value == recipe):
+            raise serializers.ValidationError(
+                'Такой рецепт уже есть!')
+        return value
+
     def create_ingredients(self, ingredients, recipe):
         for ingredient_data in ingredients:
             ingredient_id = ingredient_data['id']
             ingredient = Ingredient.objects.get(pk=ingredient_id)
             amount = ingredient_data['amount']
-            IngredientInRecipe.objects.create(
+            IngredientInRecipe.objects.bulk_create(
                 ingredient=ingredient,
                 recipe=recipe,
                 amount=amount)

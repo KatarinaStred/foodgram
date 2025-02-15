@@ -52,10 +52,9 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ('name', 'author__username')
     list_filter = ('tags',)
 
+    @admin.display(description='Добавлено в избранное')
     def in_favorite(self, obj):
         return f'{obj.favorites.count()} польз.'
-
-    in_favorite.short_description = 'Добавлено в избранное'
 
 
 @admin.register(ShoppingCart)

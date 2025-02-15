@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.http import require_GET
-from djoser.views import UserViewSet
+from djoser.views import UserViewSet as UViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
@@ -92,24 +92,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def check_recipe_action(self, request, model, serializer_class):
         recipe = self.get_object()
         user = request.user
-        if request.method == 'POST':
-            obj, created = model.objects.get_or_create(
-                user=user,
-                recipe=recipe)
-            if not created:
-                return Response(
-                    {'detail': 'Такой рецепт уже есть!'},
-                    status=status.HTTP_400_BAD_REQUEST)
-            data = serializer_class(recipe, context={'request': request}).data
-            return Response(data, status=status.HTTP_201_CREATED)
-
-        obj = model.objects.filter(user=user, recipe=recipe).first()
-        if not obj:
+        obj = model.objects.filter(user=user, recipe=recipe).first().delete()
+        if (obj == 0):
             return Response(
                 {'detail': 'Рецепт не найден.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -165,7 +153,7 @@ def get_short_link(request, pk):
         raise ValidationError(f'Рецепт с id "{pk}" не найден.')
 
 
-class UserViewSet(UserViewSet):
+class UserViewSet(UViewSet):
     """Вьюсет для работы с пользователями и подписками."""
 
     queryset = User.objects.all()
@@ -223,14 +211,6 @@ class UserViewSet(UserViewSet):
         user = request.user
         author = get_object_or_404(User, id=id)
         if request.method == 'POST':
-            if request.user == author:
-                return Response({
-                    'detail': 'Нельзя подписаться на самого себя.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            if Subscription.objects.filter(user=user, author=author).exists():
-                return Response({
-                    'detail': 'Подписка уже есть.'
-                }, status=status.HTTP_400_BAD_REQUEST)
             new_subscript = Subscription.objects.create(
                 user=user,
                 author=author)
@@ -240,7 +220,7 @@ class UserViewSet(UserViewSet):
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED)
-        if request.method == 'DELETE':
+        else:
             instance = get_object_or_404(
                 Subscription,
                 user=user,

@@ -60,6 +60,10 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient')]
 
     def __str__(self):
         return self.name
@@ -87,7 +91,7 @@ class Recipe(models.Model):
         unique=True
     )
     text = models.TextField(verbose_name='Описание рецепта')
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления',
         validators=[MinValueValidator(MIN_VALUE_VALID)],
         help_text='Время приготовления (в минутах)'
@@ -97,12 +101,16 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Автор рецепта'
     )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата публикации',
+        auto_now_add=True
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         default_related_name = 'recipes'
-        ordering = ['-id']
+        ordering = ['-pub_date']
 
     def __str__(self):
         return self.name
@@ -179,7 +187,7 @@ class IngredientInRecipe(models.Model):
         verbose_name='Рецепт',
         on_delete=models.CASCADE
     )
-    amount = models.IntegerField(
+    amount = models.PositiveIntegerField(
         verbose_name='Количество ингредиентов',
         validators=[MinValueValidator(MIN_VALUE_VALID)]
     )

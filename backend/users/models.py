@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
 
@@ -37,6 +38,7 @@ class User(AbstractUser):
     avatar = models.ImageField(
         blank=True,
         null=True,
+        default=None,
         upload_to='media/avatars/',
     )
 
@@ -75,6 +77,10 @@ class Subscription(models.Model):
             models.UniqueConstraint(
                 fields=['user', 'author'],
                 name='unique_follow')]
+
+    def clean(self):
+        if self.user == self.author:
+            raise ValidationError('Нельзя подписаться на самого себя!')
 
     def __str__(self):
         return (
