@@ -37,7 +37,6 @@ from recipes.models import (
     Recipe,
     ShoppingCart,
     Tag)
-
 from users.models import Subscription, User
 
 
