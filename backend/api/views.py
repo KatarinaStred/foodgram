@@ -92,12 +92,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def check_recipe_action(self, request, model, serializer_class):
         recipe = self.get_object()
         user = request.user
-        obj = model.objects.filter(user=user, recipe=recipe).first().delete()
-        if (obj == 0):
+        if request.method == 'POST':
+            obj, created = model.objects.get_or_create(
+                user=user,
+                recipe=recipe)
+            data = serializer_class(recipe, context={'request': request}).data
+            return Response(data, status=status.HTTP_201_CREATED)
+
+        obj = model.objects.filter(user=user, recipe=recipe).first()
+        if not obj:
             return Response(
                 {'detail': 'Рецепт не найден.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(

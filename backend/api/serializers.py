@@ -197,7 +197,7 @@ class IngredientInRecipeEditSerializer(serializers.ModelSerializer):
     """Cериализатор для связи ингредиентов
         с рецептом при работе с рецептами."""
 
-    id = serializers.IntegerField(write_only=True)
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
 
     class Meta:
         model = IngredientInRecipe
@@ -282,21 +282,23 @@ class RecipeEditSerializer(serializers.ModelSerializer):
         read_only_fields = ('author',)
 
     def validate(self, value):
-        recipe = value['recipe']
-        if (value == recipe):
-            raise serializers.ValidationError(
-                'Такой рецепт уже есть!')
+        if self.context['request'].method == 'POST':
+            name = value['name']
+            if (name == value):
+                raise serializers.ValidationError(
+                    'Такой рецепт уже есть!')
         return value
 
     def create_ingredients(self, ingredients, recipe):
-        for ingredient_data in ingredients:
-            ingredient_id = ingredient_data['id']
-            ingredient = Ingredient.objects.get(pk=ingredient_id)
-            amount = ingredient_data['amount']
-            IngredientInRecipe.objects.bulk_create(
-                ingredient=ingredient,
+        ingredients = [
+            IngredientInRecipe(
                 recipe=recipe,
-                amount=amount)
+                ingredient=ingredient['id'],
+                amount=ingredient['amount'],
+            )
+            for ingredient in ingredients
+        ]
+        IngredientInRecipe.objects.bulk_create(ingredients)
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
