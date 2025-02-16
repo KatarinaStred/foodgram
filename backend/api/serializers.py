@@ -329,6 +329,17 @@ class RecipeEditSerializer(serializers.ModelSerializer):
 class ShoppingCartSerializer(serializers.ModelSerializer):
     """Сериализатор для работы со списком покупок."""
 
+    user = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+    recipe = serializers.SlugRelatedField(
+        slug_field='name',
+        read_only=True,
+        default=None
+    )
+
     class Meta:
         model = ShoppingCart
         fields = '__all__'
@@ -341,6 +352,17 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
 class FavoriteSerializer(serializers.ModelSerializer):
     """Сериализатор для работы с избранными рецептами."""
+
+    user = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+    recipe = serializers.SlugRelatedField(
+        slug_field='name',
+        read_only=True,
+        default=None
+    )
 
     class Meta:
         model = Favorite
